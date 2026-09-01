@@ -73,7 +73,7 @@
 - Create: `pyproject.toml`
 - Create: `src/yingdao_rpa_mcp/__init__.py`
 
-- [ ] **Step 1: 确认 git 身份（未配置则先配置本仓库局部身份）**
+- [x] **Step 1: 确认 git 身份（未配置则先配置本仓库局部身份）**
 
 ```bash
 cd "/mnt/d/CODE/project/yingdao-rpa-mcp"
@@ -86,7 +86,7 @@ git config user.name "用户提供的名字"
 git config user.email "用户提供的邮箱"
 ```
 
-- [ ] **Step 2: 写 pyproject.toml**
+- [x] **Step 2: 写 pyproject.toml**
 
 ```toml
 [build-system]
@@ -125,14 +125,14 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "UP", "B"]
 ```
 
-- [ ] **Step 3: 写包骨架**
+- [x] **Step 3: 写包骨架**
 
 `src/yingdao_rpa_mcp/__init__.py`:
 ```python
 __version__ = "0.1.0"
 ```
 
-- [ ] **Step 4: 安装并冒烟**
+- [x] **Step 4: 安装并冒烟**
 
 ```bash
 cd "/mnt/d/CODE/project/yingdao-rpa-mcp"
@@ -142,7 +142,7 @@ python -c "import yingdao_rpa_mcp, fastmcp; print(yingdao_rpa_mcp.__version__)"
 ```
 Expected: 打印 `0.1.0`，无 ImportError。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pyproject.toml src/ .gitignore AGENTS.md docs/
@@ -157,7 +157,7 @@ git commit -m "chore: 项目脚手架、依赖与包骨架"
 - Create: `src/yingdao_rpa_mcp/errors.py`
 - Test: `tests/test_errors_models.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `tests/test_errors_models.py`:
 ```python
@@ -182,14 +182,14 @@ def test_error_payload_hint_default():
     assert payload["hint"] == ""
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_errors_models.py -v
 ```
 Expected: FAIL，`ModuleNotFoundError: No module named 'yingdao_rpa_mcp.errors'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/errors.py`:
 ```python
@@ -218,14 +218,14 @@ def error_payload(err: ToolError) -> dict[str, Any]:
     return {"code": err.code, "message": err.message, "hint": err.hint}
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_errors_models.py -v
 ```
 Expected: 3 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/errors.py tests/test_errors_models.py
@@ -240,7 +240,7 @@ git commit -m "feat: 统一错误模型 ToolError"
 - Create: `src/yingdao_rpa_mcp/models.py`
 - Modify: `tests/test_errors_models.py`（追加测试，文件名不改）
 
-- [ ] **Step 1: 追加失败测试**
+- [x] **Step 1: 追加失败测试**
 
 在 `tests/test_errors_models.py` 末尾追加：
 ```python
@@ -277,14 +277,14 @@ def test_robot_status_states():
     assert d == {"uuid": "u-1", "state": "exited", "exit_code": 0, "evidence": ["已退出"]}
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_errors_models.py -v
 ```
 Expected: FAIL，`No module named 'yingdao_rpa_mcp.models'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/models.py`:
 ```python
@@ -336,14 +336,14 @@ class RobotStatus:
         }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_errors_models.py -v
 ```
 Expected: 6 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/models.py tests/test_errors_models.py
@@ -358,7 +358,7 @@ git commit -m "feat: 领域模型 RobotInfo/RobotStatus"
 - Create: `src/yingdao_rpa_mcp/config.py`
 - Create: `tests/test_config.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `tests/test_config.py`:
 ```python
@@ -420,14 +420,14 @@ def test_path_fields_are_path(tmp_path: Path):
     assert cfg.log_dir == tmp_path / "log"
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_config.py -v
 ```
 Expected: FAIL，`No module named 'yingdao_rpa_mcp.config'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/config.py`:
 ```python
@@ -549,14 +549,14 @@ def load_config(argv: list[str] | None = None, config_path: Path | None = None) 
 
 注意：实现里用到 `sys`，在文件头部 import 区补 `import sys`。
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_config.py -v
 ```
 Expected: 7 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/config.py tests/test_config.py
@@ -572,7 +572,7 @@ git commit -m "feat: 三级配置加载（CLI > env > toml）"
 - Create: `src/yingdao_rpa_mcp/gateway/__init__.py`
 - Create: `tests/test_gateway_factory.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `tests/test_gateway_factory.py`:
 ```python
@@ -603,14 +603,14 @@ def test_real_gateway_on_linux_raises(monkeypatch):
     assert ei.value.code == "GATEWAY_UNAVAILABLE"
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_gateway_factory.py -v
 ```
 Expected: FAIL，`No module named 'yingdao_rpa_mcp.gateway'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/gateway/base.py`:
 ```python
@@ -679,14 +679,14 @@ def get_gateway(config: Config) -> ShadowBotGateway:
     )
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_gateway_factory.py -v
 ```
 Expected: 3 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/gateway/ tests/test_gateway_factory.py
@@ -701,7 +701,7 @@ git commit -m "feat: ShadowBotGateway 接缝与网关工厂"
 - Create: `src/yingdao_rpa_mcp/gateway/mock.py`
 - Create: `tests/test_mock_gateway.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `tests/test_mock_gateway.py`:
 ```python
@@ -791,14 +791,14 @@ async def test_tail_log_returns_recent_lines():
     assert await gw.tail_log(0) == []
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_mock_gateway.py -v
 ```
 Expected: FAIL，`No module named 'yingdao_rpa_mcp.gateway.mock'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/gateway/mock.py`:
 ```python
@@ -903,14 +903,14 @@ class MockGateway(ShadowBotGateway):
         return self._log[-n:]
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_mock_gateway.py -v
 ```
 Expected: 9 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/gateway/mock.py tests/test_mock_gateway.py
@@ -925,7 +925,7 @@ git commit -m "feat: Mock 网关状态机"
 - Create: `src/yingdao_rpa_mcp/win/params.py`
 - Create: `tests/test_params.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `tests/test_params.py`:
 ```python
@@ -954,14 +954,14 @@ def test_url_multi_params_ordered():
     assert url == "shadowbot:Run?robot-uuid=u&b=2&a=1"  # 按调用方传入顺序（dict 保序）
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_params.py -v
 ```
 Expected: FAIL，`No module named 'yingdao_rpa_mcp.win.params'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/win/params.py`:
 ```python
@@ -985,14 +985,14 @@ def build_launch_url(uuid: str, params: dict[str, str] | None = None) -> str:
     return url
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_params.py -v
 ```
 Expected: 5 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/win/params.py tests/test_params.py
@@ -1008,7 +1008,7 @@ git commit -m "feat: shadowbot URL Scheme 构造与参数编码"
 - Create: `tests/fixtures/yingdao_sample.log`
 - Create: `tests/test_logparse.py`
 
-- [ ] **Step 1: 写日志 fixture（按原仓库实测行格式合成，L3 真机采集后替换/追加）**
+- [x] **Step 1: 写日志 fixture（按原仓库实测行格式合成，L3 真机采集后替换/追加）**
 
 `tests/fixtures/yingdao_sample.log`:
 ```
@@ -1020,7 +1020,7 @@ git commit -m "feat: shadowbot URL Scheme 构造与参数编码"
 2026-06-07 11:02:00,500 xbot engine running, pid:29100,engineid:4
 ```
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 `tests/test_logparse.py`:
 ```python
@@ -1087,14 +1087,14 @@ def test_engine_running_without_taskmanager():
     assert runs[0].name == "未知机器人" and runs[0].pid == 300
 ```
 
-- [ ] **Step 3: 跑测试确认失败**
+- [x] **Step 3: 跑测试确认失败**
 
 ```bash
 pytest tests/test_logparse.py -v
 ```
 Expected: FAIL，`No module named 'yingdao_rpa_mcp.win.logparse'`
 
-- [ ] **Step 4: 写实现**
+- [x] **Step 4: 写实现**
 
 `src/yingdao_rpa_mcp/win/logparse.py`:
 ```python
@@ -1191,14 +1191,14 @@ def status_from_runs(uuid: str, runs: list[EngineRun]) -> tuple[str, int | None,
     return STATE_RUNNING, None, evidence
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 ```bash
 pytest tests/test_logparse.py -v
 ```
 Expected: 5 passed
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/win/logparse.py tests/fixtures/ tests/test_logparse.py
@@ -1216,7 +1216,7 @@ git commit -m "feat: 影刀主日志解析（TaskManager/engine running/exited, 
 - Create: `src/yingdao_rpa_mcp/win/proclive.py`
 - Create: `src/yingdao_rpa_mcp/win/launcher.py`
 
-- [ ] **Step 1: 写 keybd.py**
+- [x] **Step 1: 写 keybd.py**
 
 `src/yingdao_rpa_mcp/win/keybd.py`:
 ```python
@@ -1249,7 +1249,7 @@ def send_ctrl_alt_q() -> None:
 
 注意：文件头部 import 区补 `import ctypes`。
 
-- [ ] **Step 2: 写 proclive.py**
+- [x] **Step 2: 写 proclive.py**
 
 `src/yingdao_rpa_mcp/win/proclive.py`:
 ```python
@@ -1273,7 +1273,7 @@ def is_pid_alive(pid: int) -> bool:
     return exit_code.value == _STILL_ACTIVE
 ```
 
-- [ ] **Step 3: 写 launcher.py**
+- [x] **Step 3: 写 launcher.py**
 
 `src/yingdao_rpa_mcp/win/launcher.py`:
 ```python
@@ -1287,7 +1287,7 @@ def launch_url(url: str) -> None:
     os.startfile(url)  # type: ignore[attr-defined]  # 仅 Windows 存在
 ```
 
-- [ ] **Step 4: 冒烟验证 Linux 可 import**
+- [x] **Step 4: 冒烟验证 Linux 可 import**
 
 ```bash
 python -c "
@@ -1297,7 +1297,7 @@ print('import ok')
 ```
 Expected: 打印 `import ok`（函数体内的 ctypes.windll / os.startfile 不应在 import 时执行）。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/win/keybd.py src/yingdao_rpa_mcp/win/proclive.py src/yingdao_rpa_mcp/win/launcher.py
@@ -1314,7 +1314,7 @@ git commit -m "feat: Win32 原语（keybd_event 停止/进程存活/URL 启动�
 
 **设计**：`scan/status/tail_log` 只依赖注入的目录（Linux 用临时目录 + fixture 可全测）；`launch/stop` 调用注入的函数（测试注入假函数记录调用），默认绑定 Task 9 的真实原语。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `tests/test_windows_gateway.py`:
 ```python
@@ -1425,14 +1425,14 @@ async def test_tail_log_reads_today(tmp_path):
 
 注意：文件顶部 import 区补 `import os` 与 `from pathlib import Path`。
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_windows_gateway.py -v
 ```
 Expected: FAIL，`No module named 'yingdao_rpa_mcp.gateway.windows'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/gateway/windows.py`:
 ```python
@@ -1589,21 +1589,21 @@ class WindowsGateway(ShadowBotGateway):
         return lines[-n:]
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_windows_gateway.py -v
 ```
 Expected: 8 passed
 
-- [ ] **Step 5: 全量回归**
+- [x] **Step 5: 全量回归**
 
 ```bash
 pytest -v
 ```
 Expected: 全部通过（此前各任务测试无回归）。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/gateway/windows.py tests/test_windows_gateway.py
@@ -1618,7 +1618,7 @@ git commit -m "feat: Windows 真实网关（扫描/启动/状态/停止/日志�
 - Create: `src/yingdao_rpa_mcp/server.py`
 - Create: `tests/test_server_tools.py`
 
-- [ ] **Step 1: 写失败测试（前三个工具）**
+- [x] **Step 1: 写失败测试（前三个工具）**
 
 `tests/test_server_tools.py`:
 ```python
@@ -1693,14 +1693,14 @@ async def test_unknown_tool_error_is_dict_not_exception():
     assert data["error"]["hint"]
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_server_tools.py -v
 ```
 Expected: FAIL，`cannot import name 'build_server'`
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/server.py`:
 ```python
@@ -1840,14 +1840,14 @@ def build_server(config: Config, gateway: ShadowBotGateway | None = None) -> Fas
     return mcp
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_server_tools.py -v
 ```
 Expected: 6 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/server.py tests/test_server_tools.py
@@ -1864,7 +1864,7 @@ Task 11 已实现这两个工具的代码；本任务补齐**编排语义**测�
 - Modify: `tests/test_server_tools.py`（追加）
 - Modify: `src/yingdao_rpa_mcp/server.py`（仅当测试暴露问题时修复）
 
-- [ ] **Step 1: 追加失败测试**
+- [x] **Step 1: 追加失败测试**
 
 在 `tests/test_server_tools.py` 末尾追加：
 ```python
@@ -1947,14 +1947,14 @@ async def test_stop_stops_running_robot():
     assert data["running_after"] == []
 ```
 
-- [ ] **Step 2: 跑测试**
+- [x] **Step 2: 跑测试**
 
 ```bash
 pytest tests/test_server_tools.py -v
 ```
 Expected: 11 passed（6 旧 + 5 新）。若 `test_run_robot_output_dir_new_files` 失败，检查 `list_new_files` 的 `>= since_ts` 边界与 `SlowMock.launch` 的写入时机。
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_server_tools.py src/yingdao_rpa_mcp/server.py
@@ -1969,7 +1969,7 @@ git commit -m "test: run_robot/stop_robot 编排语义（等待、产出文件�
 - Create: `src/yingdao_rpa_mcp/__main__.py`
 - Create: `tests/test_entry.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `tests/test_entry.py`:
 ```python
@@ -1987,14 +1987,14 @@ def test_help_exits_zero():
     assert "--mock" in proc.stdout
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```bash
 pytest tests/test_entry.py -v
 ```
 Expected: FAIL（`__main__` 不存在，退出码非 0）
 
-- [ ] **Step 3: 写实现**
+- [x] **Step 3: 写实现**
 
 `src/yingdao_rpa_mcp/__main__.py`:
 ```python
@@ -2035,21 +2035,21 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bash
 pytest tests/test_entry.py -v
 ```
 Expected: 1 passed
 
-- [ ] **Step 5: stdio + mock 手动冒烟（MCP Inspector，眼见为实）**
+- [x] **Step 5: stdio + mock 手动冒烟（MCP Inspector，眼见为实）**
 
 ```bash
 npx -y @modelcontextprotocol/inspector python -m yingdao_rpa_mcp --mock
 ```
 Expected: 浏览器打开 Inspector → Connect → Tools 里能看到 5 个工具 → `list_robots` 返回 3 个演示机器人且 `mock: true` → `run_robot`（uuid 取列表里的）返回 `launched: true`。
 
-- [ ] **Step 6: 全量测试 + ruff**
+- [x] **Step 6: 全量测试 + ruff**
 
 ```bash
 pytest -v
@@ -2057,14 +2057,14 @@ ruff check .
 ```
 Expected: 全部 passed；ruff 无告警（有则修复后重跑）。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/yingdao_rpa_mcp/__main__.py tests/test_entry.py
 git commit -m "feat: python -m 入口（stdio/http，日志走 stderr）"
 ```
 
-- [ ] **Step 8: 汇报**
+- [x] **Step 8: 汇报**
 
 向用户汇报：L1 完成（5 工具 + 双网关 + 双传输 + N 个测试全绿 + Inspector 冒烟通过），下一步是 L2（服务器部署 + 闷闷联调，另立计划）。
 
