@@ -16,8 +16,8 @@ def test_parse_fixture_two_runs():
     runs = parse_log_text(FIXTURE.read_text(encoding="utf-8"))
     assert len(runs) == 2
     first, second = runs
-    assert first.name == "测试skill远程调度系统"
-    assert first.uuid == "c6073f48-0629-4eaa-9414-69de74c28757"
+    assert first.name == "示例-远程调度机器人"
+    assert first.uuid == "aaaa1111-bbbb-4ccc-8ddd-eeeeffff0001"
     assert first.trigger == "Manual"
     assert first.pid == 28920 and first.engine_id == "3"
     assert first.exited is True  # 有对应 exited 行
@@ -41,7 +41,7 @@ def test_lifo_pairing_two_concurrent_runs():
 
 def test_status_from_runs_branches():
     runs = parse_log_text(FIXTURE.read_text(encoding="utf-8"))
-    exited_uuid = "c6073f48-0629-4eaa-9414-69de74c28757"
+    exited_uuid = "aaaa1111-bbbb-4ccc-8ddd-eeeeffff0001"
     running_uuid = "8f5e2b9c-1d3a-4e6b-9c8d-2a4b6c8d0e2f"
 
     state, code, ev = status_from_runs(exited_uuid, runs)

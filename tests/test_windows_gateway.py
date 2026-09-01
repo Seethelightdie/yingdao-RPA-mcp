@@ -91,7 +91,7 @@ async def test_stop_calls_primitives(tmp_path):
 async def test_status_uses_log_and_liveness(tmp_path):
     gw, _ = make_gateway(tmp_path, alive_pids={29100}, log_text=FIXTURE)
     st = await gw.status()
-    assert st["c6073f48-0629-4eaa-9414-69de74c28757"].state == STATE_EXITED
+    assert st["aaaa1111-bbbb-4ccc-8ddd-eeeeffff0001"].state == STATE_EXITED
     assert st["8f5e2b9c-1d3a-4e6b-9c8d-2a4b6c8d0e2f"].state == STATE_RUNNING  # pid 29100 存活
 
 
@@ -103,9 +103,9 @@ async def test_status_dead_pid_means_exited(tmp_path):
 
 async def test_status_single_uuid(tmp_path):
     gw, _ = make_gateway(tmp_path, alive_pids={29100}, log_text=FIXTURE)
-    st = await gw.status("c6073f48-0629-4eaa-9414-69de74c28757")
-    assert set(st) == {"c6073f48-0629-4eaa-9414-69de74c28757"}
-    assert st["c6073f48-0629-4eaa-9414-69de74c28757"].state == STATE_EXITED
+    st = await gw.status("aaaa1111-bbbb-4ccc-8ddd-eeeeffff0001")
+    assert set(st) == {"aaaa1111-bbbb-4ccc-8ddd-eeeeffff0001"}
+    assert st["aaaa1111-bbbb-4ccc-8ddd-eeeeffff0001"].state == STATE_EXITED
 
 
 async def test_tail_log_missing_file(tmp_path):
