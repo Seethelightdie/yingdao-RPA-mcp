@@ -13,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from ..config import Config  # config→gateway 无循环依赖，可安全做类型引用
+from ..errors import ROBOT_NOT_FOUND, ToolError
 from ..models import RobotInfo, RobotStatus
 from ..win.logparse import parse_log_text, status_from_runs, today_log_path
 from ..win.params import build_launch_url
@@ -124,6 +125,11 @@ class WindowsGateway(ShadowBotGateway):
 
     # ---- launch / stop ----
     async def launch(self, uuid: str, params: dict[str, str]) -> None:
+        # launch 前先 scan 校验 uuid 存在（base.py 契约，对齐 MockGateway）；
+        # scan 每次扫盘，但 launch 是低频动作，可接受
+        if not any(r.uuid == uuid for r in await self.scan()):
+            raise ToolError(ROBOT_NOT_FOUND, f"未找到机器人 {uuid}",
+                            "先用 list_robots 查看可用机器人")
         self._launch(build_launch_url(uuid, params))
 
     async def stop(self) -> None:

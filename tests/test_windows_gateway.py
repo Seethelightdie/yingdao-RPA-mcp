@@ -2,6 +2,9 @@ import json
 import os
 from pathlib import Path
 
+import pytest
+
+from yingdao_rpa_mcp.errors import ROBOT_NOT_FOUND, ToolError
 from yingdao_rpa_mcp.gateway.windows import WindowsGateway
 from yingdao_rpa_mcp.models import STATE_EXITED, STATE_RUNNING, STATE_UNKNOWN
 from yingdao_rpa_mcp.win.logparse import today_log_path
@@ -66,9 +69,17 @@ async def test_scan_structure(tmp_path):
 
 
 async def test_launch_builds_url_and_records(tmp_path):
+    make_apps(tmp_path)  # launch 前校验 uuid 存在（base.py 契约），需先有可扫到的机器人
     gw, calls = make_gateway(tmp_path)
     await gw.launch("uuid-a", {"name": "张三", "note": "a&b"})
     assert calls["launch"] == ["shadowbot:Run?robot-uuid=uuid-a&name=张三&note=a%26b"]
+
+
+async def test_launch_unknown_uuid_raises(tmp_path):
+    gw, _ = make_gateway(tmp_path)
+    with pytest.raises(ToolError) as ei:
+        await gw.launch("ghost-uuid", {})
+    assert ei.value.code == ROBOT_NOT_FOUND
 
 
 async def test_stop_calls_primitives(tmp_path):
