@@ -12,7 +12,7 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from ..config import Config  # 仅类型引用（config→errors 单向，无循环）
+from ..config import Config  # config→gateway 无循环依赖，可安全做类型引用
 from ..models import RobotInfo, RobotStatus
 from ..win.logparse import parse_log_text, status_from_runs, today_log_path
 from ..win.params import build_launch_url
@@ -77,7 +77,11 @@ class WindowsGateway(ShadowBotGateway):
     async def scan(self) -> list[RobotInfo]:
         robots: list[RobotInfo] = []
         for apps_dir in self._apps_dirs():
-            for item in apps_dir.iterdir():
+            try:
+                items = list(apps_dir.iterdir())
+            except OSError:  # 他人用户目录可能 PermissionError：跳过继续（缺了就降级）
+                continue
+            for item in items:
                 if item.name.endswith("_temp") or not item.is_dir():
                     continue
                 robots.append(self._read_robot(item))
@@ -114,7 +118,9 @@ class WindowsGateway(ShadowBotGateway):
                     version=str(data.get("version", "1.0.0")),
                     description=str(data.get("description", "")),
                 )
-        return RobotInfo(uuid=robot_dir.name, name=robot_dir.name, path=str(robot_dir), mtime=mtime)
+        # 口径差异：无任何可解析 package → 原仓库 fallback 版本"未知"；dict 分支缺 version 用"1.0.0"
+        return RobotInfo(uuid=robot_dir.name, name=robot_dir.name, path=str(robot_dir),
+                         mtime=mtime, version="未知")
 
     # ---- launch / stop ----
     async def launch(self, uuid: str, params: dict[str, str]) -> None:
@@ -124,12 +130,18 @@ class WindowsGateway(ShadowBotGateway):
         self._stop()
 
     # ---- status / tail_log ----
-    async def status(self, uuid: str | None = None) -> dict[str, RobotStatus]:
+    def _today_log_text(self) -> str | None:
+        """当日日志全文；None=当日无日志（影刀未运行/未安装）。"""
         log_file = today_log_path(self.log_dir)
         if not log_file.exists():
-            return {}
-        runs = parse_log_text(log_file.read_text(encoding="utf-8", errors="replace"))
+            return None
+        return log_file.read_text(encoding="utf-8", errors="replace")
+
+    async def status(self, uuid: str | None = None) -> dict[str, RobotStatus]:
+        text = self._today_log_text()
+        runs = parse_log_text(text) if text is not None else []
         for run in runs:
+            # 无 pid 的 run 无法补判，保守视为仍在运行
             if not run.exited and run.pid is not None and not self._alive(run.pid):
                 run.exited = True  # 日志未标记退出且进程已死 → 已退出（GetExitCodeProcess）
         if uuid is not None:
@@ -147,10 +159,10 @@ class WindowsGateway(ShadowBotGateway):
         return result
 
     async def tail_log(self, n: int) -> list[str]:
-        log_file = today_log_path(self.log_dir)
-        if not log_file.exists():
+        text = self._today_log_text()
+        if text is None:
             return []
-        lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
+        lines = text.splitlines()
         if n <= 0:
             return []
         return lines[-n:]

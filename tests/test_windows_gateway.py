@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from yingdao_rpa_mcp.gateway.windows import WindowsGateway
-from yingdao_rpa_mcp.models import STATE_EXITED, STATE_RUNNING
+from yingdao_rpa_mcp.models import STATE_EXITED, STATE_RUNNING, STATE_UNKNOWN
 from yingdao_rpa_mcp.win.logparse import today_log_path
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "yingdao_sample.log").read_text(encoding="utf-8")
@@ -20,7 +20,7 @@ def make_gateway(tmp_path, alive_pids=None, log_text=None):
         log_dir=logdir,
         launch_fn=lambda url: calls["launch"].append(url),
         stop_fn=lambda: calls.__setitem__("stop", calls["stop"] + 1),
-        alive_fn=lambda pid: (alive_pids or set()).__contains__(pid),
+        alive_fn=lambda pid: pid in (alive_pids or set()),
     )
     if log_text is not None:
         today_log_path(logdir).write_text(log_text, encoding="utf-8")
@@ -42,6 +42,10 @@ def make_apps(tmp_path):
     c = apps / "uuid-c"
     c.mkdir(parents=True)
     (c / "config.json").write_text("{}", encoding="utf-8")  # 命中第 4 候选，无 name → 名字=uuid
+    d = apps / "uuid-d"
+    d.mkdir(parents=True)
+    (d / "robot.json").write_text("{bad json", encoding="utf-8")  # 坏 JSON → 落到下一候选
+    (d / "config.json").write_text(json.dumps({"name": "兜底机器人"}), encoding="utf-8")
     temp = apps / "uuid-temp_temp"
     temp.mkdir()
     return apps
@@ -103,3 +107,50 @@ async def test_tail_log_reads_today(tmp_path):
     lines = await gw.tail_log(3)
     assert len(lines) == 3
     assert "engine running" in lines[-1]
+
+
+async def test_status_unknown_uuid_without_log(tmp_path):
+    gw, _ = make_gateway(tmp_path)
+    st = await gw.status("nonexistent-uuid")
+    assert set(st) == {"nonexistent-uuid"}
+    assert st["nonexistent-uuid"].state == STATE_UNKNOWN  # 显式 uuid 无日志 → unknown（接缝契约）
+    assert any("未出现" in e for e in st["nonexistent-uuid"].evidence)
+
+
+async def test_status_no_log_summary_empty(tmp_path):
+    gw, _ = make_gateway(tmp_path)
+    assert await gw.status() == {}  # 汇总路径无日志仍返回空 dict（回归钉）
+
+
+async def test_scan_skips_unreadable_apps_dir(tmp_path, monkeypatch):
+    make_apps(tmp_path)
+    gw, _ = make_gateway(tmp_path)
+    real_iterdir = Path.iterdir
+
+    def denied_iterdir(self):
+        if self.name == "apps":  # 模拟他人用户目录无读取权限
+            raise PermissionError(13, "denied")
+        return real_iterdir(self)
+
+    monkeypatch.setattr(Path, "iterdir", denied_iterdir)
+    assert await gw.scan() == []  # 权限降级：跳过不可读目录继续，不抛错
+
+
+async def test_scan_robot_json_third_candidate(tmp_path):
+    apps = make_apps(tmp_path)
+    e = apps / "uuid-e"
+    e.mkdir()
+    (e / "robot.json").write_text(json.dumps({"name": "第三候选机器人"}), encoding="utf-8")
+    gw, _ = make_gateway(tmp_path)
+    by_uuid = {r.uuid: r for r in await gw.scan()}
+    assert by_uuid["uuid-e"].name == "第三候选机器人"
+
+
+async def test_scan_bad_json_falls_to_next_candidate(tmp_path):
+    apps = make_apps(tmp_path)
+    bare = apps / "uuid-bare"
+    bare.mkdir()  # 无任何 package 文件 → 兜底分支
+    gw, _ = make_gateway(tmp_path)
+    by_uuid = {r.uuid: r for r in await gw.scan()}
+    assert by_uuid["uuid-d"].name == "兜底机器人"           # robot.json 坏 → 跳到 config.json
+    assert by_uuid["uuid-bare"].version == "未知"  # 无可解析 package → 原仓库 fallback 口径
