@@ -1,11 +1,13 @@
 """Mock 网关：内存假机器人 + 假日志（行格式仿真，便于 tail_log/状态证据演示）。
 
 产品功能（非 Windows 体验/演示），也是全量自动化测试替身。
-mock 输出必须可辨识：假日志带 Mock 触发标记、证据行带 (mock) 后缀；
-payload 级 "mock": true 标识由工具层（server.py）负责。
+mock 可辨识策略：日志行与真实影刀格式完全同构（Mock 仅作为 trigger 位的自由 token
+出现，不破坏行同构）；mock 身份由 payload 级 "mock": true（Task 11 工具层负责）
+与 mock:// 路径承担——AGENTS.md 红线 4 的"如标记 mock: true"由此满足。
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 
 from ..errors import ROBOT_NOT_FOUND, ToolError
@@ -19,8 +21,24 @@ from ..models import (
 from .base import ShadowBotGateway
 
 
+def _taskmanager_line(now: str, name: str, uuid: str) -> str:
+    """[TaskManager] 触发行：末位 trigger 是自由 token，Mock 演示即写 Mock。"""
+    return f"{now} [TaskManager]  task continue: True. {name} {uuid} Mock"
+
+
+def _engine_running_line(now: str, pid: int, engine_id: int) -> str:
+    return f"{now} xbot engine running, pid:{pid},engineid:{engine_id}"
+
+
+def _engine_exited_line(now: str) -> str:
+    return f"{now} xbot engine exited, ending"
+
+
 def _default_robots() -> list[RobotInfo]:
-    """原仓库公开演示数据（HnBigVolibear/yingdao_robot_run_api_manage_and_skill）。"""
+    """原仓库公开演示数据（HnBigVolibear/yingdao_robot_run_api_manage_and_skill）。
+
+    以下 uuid 为原仓库源码中的合成演示数据（create_mock_robots），非任何真实机器人的 uuid。
+    """
     return [
         RobotInfo(uuid="3d1c3cc8-a4e4-48c4-984f-61be9e94a031", name="演示-数据采集机器人",
                   path="mock://apps/3d1c3cc8", mtime=datetime(2024, 1, 15, 10, 30, 0),
@@ -34,13 +52,21 @@ def _default_robots() -> list[RobotInfo]:
     ]
 
 
+@dataclass
+class _RunRecord:
+    pid: int
+    started: str
+    engine_id: int
+    exit_code: int | None = None  # 仅 finished 记录填写（simulate_exit 时填）
+
+
 class MockGateway(ShadowBotGateway):
     def __init__(self, robots: list[RobotInfo] | None = None) -> None:
         self._robots = list(robots) if robots is not None else _default_robots()
-        self._running: dict[str, dict] = {}          # uuid -> {"pid", "started", "engine_id"}
-        self._finished: dict[str, list[dict]] = {}   # uuid -> [run]
+        self._running: dict[str, _RunRecord] = {}
+        self._finished: dict[str, list[_RunRecord]] = {}
         self._log: list[str] = []
-        self._next_pid = 28000
+        self._next_pid = 28000  # 仿真 PID 起点：避开常见系统进程段，纯演示用途
 
     def _find(self, uuid: str) -> RobotInfo:
         for r in self._robots:
@@ -52,16 +78,25 @@ class MockGateway(ShadowBotGateway):
         return sorted(self._robots, key=lambda r: r.mtime or datetime.min, reverse=True)
 
     async def launch(self, uuid: str, params: dict[str, str]) -> None:
+        """启动机器人；未知 uuid 抛 ToolError(ROBOT_NOT_FOUND)。
+
+        同一 uuid 重复 launch 时覆盖运行状态（演示简化；真实影刀会并行第二个 engine）。
+        """
         robot = self._find(uuid)
         now = datetime.now().isoformat(timespec="seconds")
         pid = self._next_pid
         self._next_pid += 1
-        self._running[uuid] = {"pid": pid, "started": now, "engine_id": pid % 100}
-        self._log.append(f"{now} [TaskManager]  task continue: True. {robot.name} {uuid} Mock")
-        self._log.append(f"{now} xbot engine running, pid:{pid},engineid:{pid % 100}")
+        engine_id = pid % 100
+        self._running[uuid] = _RunRecord(pid=pid, started=now, engine_id=engine_id)
+        self._log.append(_taskmanager_line(now, robot.name, uuid))
+        self._log.append(_engine_running_line(now, pid, engine_id))
 
     async def status(self, uuid: str | None = None) -> dict[str, RobotStatus]:
-        known = {r.uuid for r in self._robots} | set(self._running) | set(self._finished)
+        """查询状态。uuid=None 按"当日日志出现过"聚合（即有运行记录的 uuid）。
+
+        显式传入从未出现过的 uuid 不抛错，返回 state=unknown（接缝契约）。
+        """
+        known = set(self._running) | set(self._finished)
         targets = [uuid] if uuid is not None else sorted(known)
         result: dict[str, RobotStatus] = {}
         for u in targets:
@@ -69,15 +104,13 @@ class MockGateway(ShadowBotGateway):
                 run = self._running[u]
                 result[u] = RobotStatus(
                     uuid=u, state=STATE_RUNNING,
-                    evidence=[f"{run['started']} xbot engine running, "
-                              f"pid:{run['pid']},engineid:{run['engine_id']} (mock)"],
+                    evidence=[_engine_running_line(run.started, run.pid, run.engine_id)],
                 )
             elif u in self._finished and self._finished[u]:
                 run = self._finished[u][-1]
                 result[u] = RobotStatus(
-                    uuid=u, state=STATE_EXITED, exit_code=run["exit_code"],
-                    evidence=[f"{run['started']} xbot engine exited, ending "
-                              f"(mock, exit={run['exit_code']})"],
+                    uuid=u, state=STATE_EXITED, exit_code=run.exit_code,
+                    evidence=[_engine_exited_line(run.started)],
                 )
             else:
                 result[u] = RobotStatus(
@@ -92,8 +125,9 @@ class MockGateway(ShadowBotGateway):
         if run is None:
             return
         now = datetime.now().isoformat(timespec="seconds")
-        self._log.append(f"{now} xbot engine exited, ending")
-        self._finished.setdefault(uuid, []).append({**run, "exit_code": exit_code})
+        self._log.append(_engine_exited_line(now))
+        run.exit_code = exit_code
+        self._finished.setdefault(uuid, []).append(run)
 
     async def stop(self) -> None:
         for uuid in list(self._running):

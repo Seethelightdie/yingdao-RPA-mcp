@@ -53,7 +53,8 @@ async def test_status_none_aggregates_all():
     gw = MockGateway(seed())
     await gw.launch("uuid-a", {})
     st = await gw.status(None)
-    assert {"uuid-a", "uuid-b"} <= set(st)
+    assert set(st) == {"uuid-a"}  # D1: 只聚合当日日志出现过的（uuid-b 未运行，不出现）
+    assert st["uuid-a"].state == STATE_RUNNING
 
 
 async def test_simulate_exit_then_exited():
@@ -82,3 +83,35 @@ async def test_tail_log_returns_recent_lines():
     assert len(lines) == 1
     assert "engine running" in lines[0]
     assert await gw.tail_log(0) == []
+
+
+async def test_relaunch_overwrites_running_state():
+    # D5: 同一 uuid 重复 launch 覆盖运行状态，evidence 只反映最后一次启动的 pid
+    gw = MockGateway(seed())
+    await gw.launch("uuid-a", {})
+    old_pid = int((await gw.status("uuid-a"))["uuid-a"].evidence[0].split("pid:")[1].split(",")[0])
+    await gw.launch("uuid-a", {})
+    st = (await gw.status("uuid-a"))["uuid-a"]
+    assert st.state == STATE_RUNNING
+    assert len(st.evidence) == 1
+    assert int(st.evidence[0].split("pid:")[1].split(",")[0]) == old_pid + 1
+
+
+async def test_stop_noop_when_nothing_running():
+    gw = MockGateway(seed())
+    await gw.stop()  # 不抛错
+    assert await gw.status(None) == {}  # D1 后语义：无运行记录 → 空 dict
+
+
+async def test_simulate_exit_nonzero_code():
+    gw = MockGateway(seed())
+    await gw.launch("uuid-a", {})
+    gw.simulate_exit("uuid-a", exit_code=2)
+    st = (await gw.status("uuid-a"))["uuid-a"]
+    assert st.state == STATE_EXITED
+    assert st.exit_code == 2
+
+
+async def test_status_none_empty_when_no_activity():
+    gw = MockGateway(seed())
+    assert await gw.status(None) == {}
