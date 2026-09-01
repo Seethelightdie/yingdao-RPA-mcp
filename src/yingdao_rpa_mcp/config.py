@@ -148,7 +148,7 @@ def _validate_merged(merged: dict[str, Any]) -> None:
     if port is not None and not 1 <= port <= 65535:
         raise ToolError(CONFIG_ERROR, f"port 超出有效范围: {port}", "应为 1-65535 的整数")
     wait = merged.get("wait_seconds")
-    if wait is not None and wait < 0:
+    if wait is not None and (wait < 0 or wait != wait):  # wait != wait → nan 防护
         raise ToolError(CONFIG_ERROR, f"wait_seconds 不能为负数: {wait}", "应为非负数字")
 
 

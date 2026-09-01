@@ -150,3 +150,23 @@ def test_toml_unknown_key_warns_to_stderr(tmp_path: Path, capsys):
     captured = capsys.readouterr()
     assert "忽略 config.toml 未知键: foo" in captured.err
     assert captured.out == ""
+
+
+def test_invalid_transport_raises(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("YINGDAO_MCP_TRANSPORT", "grpc")
+    with pytest.raises(ToolError) as excinfo:
+        load_config([])
+    assert excinfo.value.code == CONFIG_ERROR
+    toml = tmp_path / "config.toml"
+    toml.write_text('transport = "grpc"\n', encoding="utf-8")
+    with pytest.raises(ToolError) as toml_excinfo:
+        load_config([], config_path=toml)
+    assert toml_excinfo.value.code == CONFIG_ERROR
+
+
+def test_toml_wait_seconds_nan_raises(tmp_path: Path):
+    toml = tmp_path / "config.toml"
+    toml.write_text("wait_seconds = nan\n", encoding="utf-8")
+    with pytest.raises(ToolError) as excinfo:
+        load_config([], config_path=toml)
+    assert excinfo.value.code == CONFIG_ERROR
