@@ -59,3 +59,45 @@ def test_engine_running_without_taskmanager():
     runs = parse_log_text(text)
     assert len(runs) == 1
     assert runs[0].name == "未知机器人" and runs[0].pid == 300
+
+
+def test_taskmanager_without_colon_does_not_crash():
+    text = "\n".join([
+        "2026-06-07 12:00:00,000 [TaskManager] task continues running",  # 含 "task continue" 无冒号
+        "2026-06-07 12:00:00,500 xbot engine running, pid:400,engineid:9",
+    ])
+    runs = parse_log_text(text)  # 不抛异常
+    assert len(runs) == 1
+    assert runs[0].name == "未知机器人"
+
+
+def test_evidence_cap_keeps_latest_20():
+    lines = []
+    for i in range(25):
+        ts = f"2026-06-07 13:{i:02d}:00,000"
+        lines.append(f"{ts} [TaskManager]  task continue: True. 压测机器人 cap-uuid Manual")
+        lines.append(f"{ts} xbot engine running, pid:{30000 + i},engineid:{i}")
+        lines.append(f"{ts} xbot engine exited, ending")
+    runs = parse_log_text("\n".join(lines))
+    assert len(runs) == 25
+    state, code, ev = status_from_runs("cap-uuid", runs)
+    assert state == STATE_EXITED and code is None
+    assert len(ev) == 21
+    assert "共 25 条" in ev[-1]
+
+
+def test_malformed_lines_bundle():
+    text = "\n".join([
+        "2026-06-07 14:00:00,000 [TaskManager]  task continue: False. 乙 u-b Manual",  # 不产生 run
+        "2026-06-07 14:00:01,000 xbot engine exited, ending",  # exited 无 running → 忽略不崩溃
+        "2026-06-07 14:00:02,000 [TaskManager]  task continue: True. 甲 u-a Manual",
+        "2026-06-07 14:00:02,500 xbot engine running, pid:abc,engineid:7",  # pid 非数字 → None
+        "2026-06-07 14:00:03,000 [TaskManager]  task continue: True. 甲 u-a Manual",
+        "2026-06-07 14:00:03,500 xbot engine running, pid:500,engineid:8",
+        "2026-06-07 14:00:04,000 xbot engine exited, ending",  # LIFO → 配对末次 pid:500
+    ])
+    runs = parse_log_text(text)
+    assert len(runs) == 2
+    assert runs[0].pid is None and runs[0].exited is False
+    state, _, _ = status_from_runs("u-a", runs)
+    assert state == STATE_EXITED  # last-wins：末次 run 已 exited（首次 run 未 exited）

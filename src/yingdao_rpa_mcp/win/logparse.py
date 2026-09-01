@@ -13,8 +13,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import TypeVar
 
 from ..models import STATE_EXITED, STATE_RUNNING, STATE_UNKNOWN
+
+_T = TypeVar("_T")
+
+_EVIDENCE_CAP = 20  # MCP 响应体积防线：高频机器人一天数百 run，evidence 只保留最近 20 条
 
 
 @dataclass
@@ -40,7 +45,7 @@ def parse_log_text(text: str) -> list[EngineRun]:
 
     for raw in text.splitlines():
         line = raw.strip()
-        if "[TaskManager]" in line and "task continue" in line:
+        if "[TaskManager]" in line and "task continue:" in line:
             time_part = line[:23].strip()
             info = line.split("task continue:", 1)[1].strip()
             tokens = info.split()
@@ -59,6 +64,7 @@ def parse_log_text(text: str) -> list[EngineRun]:
                 active_pids.append(pid)
         elif "xbot engine exited" in line:
             if active_pids:
+                # exited 行不含 PID，按 LIFO 与最近的 running 配对（原仓库启发式）
                 pid = active_pids.pop()
                 for run in reversed(runs):
                     if run.pid == pid and not run.exited:
@@ -67,7 +73,7 @@ def parse_log_text(text: str) -> list[EngineRun]:
     return runs
 
 
-def _extract_after(line: str, marker: str, conv: Callable[[str], int | str]) -> int | str | None:
+def _extract_after(line: str, marker: str, conv: Callable[[str], _T]) -> _T | None:
     if marker not in line:
         return None
     part = line.split(marker, 1)[1].split(",")[0].strip()
@@ -82,11 +88,14 @@ def status_from_runs(uuid: str, runs: list[EngineRun]) -> tuple[str, int | None,
     if not mine:
         return STATE_UNKNOWN, None, ["日志中未出现该机器人的运行记录"]
     last = mine[-1]
+    total = len(mine)
     evidence = [
         f"{r.start_time} {r.name} pid={r.pid} engineid={r.engine_id} "
         f"trigger={r.trigger} {'exited' if r.exited else 'running'}"
-        for r in mine
+        for r in mine[-_EVIDENCE_CAP:]
     ]
+    if total > _EVIDENCE_CAP:
+        evidence.append(f"…（共 {total} 条，仅显示最近 {_EVIDENCE_CAP} 条）")
     if last.exited:
         return STATE_EXITED, None, evidence
     return STATE_RUNNING, None, evidence
