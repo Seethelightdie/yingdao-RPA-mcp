@@ -19,6 +19,8 @@ build/
 config.toml
 *.local.toml
 .env
+!examples/config.toml
+!examples/*.local.toml
 
 # IDE / OS
 .idea/

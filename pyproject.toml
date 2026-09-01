@@ -7,9 +7,9 @@ name = "yingdao-rpa-mcp"
 version = "0.1.0"
 description = "影刀（ShadowBot）社区版的 MCP 服务器：侦察代替 API，双传输 + Mock 模式"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 dependencies = [
-    "fastmcp>=2.0",
+    "fastmcp>=4.0,<5",
     "tomli; python_version < '3.11'",
 ]
 
@@ -24,6 +24,7 @@ packages = ["src/yingdao_rpa_mcp"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
 [tool.ruff]
