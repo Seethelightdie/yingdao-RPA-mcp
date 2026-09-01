@@ -1,4 +1,8 @@
-"""进程存活检测：OpenProcess + GetExitCodeProcess，STILL_ACTIVE=259。"""
+"""进程存活检测：OpenProcess + GetExitCodeProcess，STILL_ACTIVE=259。
+
+已知局限：OpenProcess 返回 NULL 时（权限不足/受保护进程）一律视为已退出；
+L3 排障时注意区分"真死了"与"看不见"。
+"""
 from __future__ import annotations
 
 import ctypes

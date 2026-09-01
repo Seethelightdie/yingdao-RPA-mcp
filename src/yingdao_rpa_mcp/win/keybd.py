@@ -16,6 +16,7 @@ _KEYEVENTF_KEYUP = 0x0002
 
 
 def send_ctrl_alt_q() -> None:
+    """发送后不检查 keybd_event 返回值（失效场景由网关层"动作后等 5 秒验证"兜底）。"""
     user32 = ctypes.windll.user32
     user32.keybd_event(_VK_CONTROL, 0, 0, 0)
     user32.keybd_event(_VK_MENU, 0, 0, 0)
