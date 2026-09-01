@@ -97,7 +97,7 @@ def build_server(config: Config, gateway: ShadowBotGateway | None = None) -> Fas
 
     @mcp.tool
     async def stop_robot() -> dict:
-        """【全局停止】向影刀发送 Ctrl+Alt+Q 优雅停止，会停止当前运行的全部机器人（不止一个）。
+        """⚠️【全局停止】向影刀发送 Ctrl+Alt+Q 优雅停止，会停止当前运行的全部机器人（不止一个）。
         严禁杀进程。当前没有机器人运行时返回 stopped=false（不谎报成功）。
         调用前必须先向用户确认："这会停掉所有正在运行的机器人"。"""
         try:
