@@ -18,8 +18,8 @@ def test_seam_has_five_ops():
     assert ops == {"scan", "launch", "status", "stop", "tail_log"}
 
 
-def test_real_gateway_on_linux_raises(monkeypatch):
-    monkeypatch.setattr("sys.platform", "linux")  # WSL 开发机即 linux，双保险
+def test_real_gateway_on_non_windows_raises(monkeypatch):
+    monkeypatch.setattr("sys.platform", "linux")  # 保证跨平台确定性（Windows CI 上同样承重）
     with pytest.raises(ToolError) as ei:
         get_gateway(Config(mock=False))
     assert ei.value.code == "GATEWAY_UNAVAILABLE"
