@@ -67,6 +67,16 @@ async def test_tail_log():
         data = (await client.call_tool("tail_log", {"n": 1})).data
     assert len(data["lines"]) == 1
     assert "engine running" in data["lines"][0]
+    assert "note" not in data  # 非空结果不加原因标注
+
+
+async def test_tail_log_empty_has_note():
+    """spec:98 + base.py 契约：空结果的原因标注由工具层补充。"""
+    server = build_server(Config(mock=True), gateway=MockGateway(seed()))
+    async with Client(server) as client:
+        data = (await client.call_tool("tail_log", {"n": 10})).data
+    assert data["lines"] == []
+    assert "note" in data
 
 
 async def test_unknown_robot_error_is_dict_not_exception():
