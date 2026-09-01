@@ -1,4 +1,13 @@
+from datetime import datetime
+
 from yingdao_rpa_mcp.errors import ToolError, error_payload
+from yingdao_rpa_mcp.models import (
+    STATE_EXITED,
+    STATE_RUNNING,
+    STATE_UNKNOWN,
+    RobotInfo,
+    RobotStatus,
+)
 
 
 def test_tool_error_carries_fields():
@@ -17,17 +26,6 @@ def test_error_payload_shape():
 def test_error_payload_hint_default():
     payload = error_payload(ToolError("INTERNAL", "boom"))
     assert payload["hint"] == ""
-
-
-from datetime import datetime
-
-from yingdao_rpa_mcp.models import (
-    STATE_EXITED,
-    STATE_RUNNING,
-    STATE_UNKNOWN,
-    RobotInfo,
-    RobotStatus,
-)
 
 
 def test_robot_info_to_dict():
