@@ -169,3 +169,21 @@ async def test_stop_stops_running_robot():
     assert data["stopped"] is True
     assert data["running_before"] == ["uuid-a"]
     assert data["running_after"] == []
+
+
+class NoopStopGateway(MockGateway):
+    """stop 为 no-op 的桩：模拟 keybd_event 静默失效 / 停止慢于验证窗口。"""
+
+    async def stop(self):
+        pass
+
+
+async def test_stop_ineffective_reports_false_not_lie():
+    gw = NoopStopGateway(seed())
+    cfg = Config(mock=True, wait_seconds=0.0)
+    async with Client(build_server(cfg, gateway=gw)) as client:
+        await client.call_tool("run_robot", {"uuid": "uuid-a", "params": {}})
+        data = (await client.call_tool("stop_robot", {})).data
+    assert data["running_before"] == ["uuid-a"]
+    assert data["running_after"] == ["uuid-a"]
+    assert data["stopped"] is False  # 核心契约：不谎报成功
