@@ -1,10 +1,14 @@
+import asyncio
+import os
+import time
 from datetime import datetime
 
 from fastmcp import Client
 
 from yingdao_rpa_mcp.config import Config
+from yingdao_rpa_mcp.gateway.base import ShadowBotGateway
 from yingdao_rpa_mcp.gateway.mock import MockGateway
-from yingdao_rpa_mcp.models import RobotInfo
+from yingdao_rpa_mcp.models import RobotInfo, RobotStatus
 from yingdao_rpa_mcp.server import build_server
 
 
@@ -84,3 +88,84 @@ async def test_unknown_robot_error_is_dict_not_exception():
         data = (await client.call_tool("run_robot", {"uuid": "ghost", "params": {}})).data
     assert data["error"]["code"] == "ROBOT_NOT_FOUND"
     assert data["error"]["hint"]
+
+
+class ExitedGateway(ShadowBotGateway):
+    """测试桩：启动后立即退出——验证真实网关"5 秒窗口内跑完"的编排。"""
+
+    async def scan(self):
+        return [RobotInfo(uuid="u", name="x", path="/x")]
+
+    async def launch(self, uuid, params):
+        self.launched = True
+
+    async def status(self, uuid=None):
+        return {"u": RobotStatus(uuid="u", state="exited", evidence=["已退出"])}
+
+    async def stop(self):
+        pass
+
+    async def tail_log(self, n):
+        return []
+
+
+async def test_run_robot_exited_reports_launched_with_exited_state():
+    cfg = Config(mock=True, wait_seconds=0.01)
+    async with Client(build_server(cfg, gateway=ExitedGateway())) as client:
+        data = (await client.call_tool("run_robot", {"uuid": "u"})).data
+    assert data["launched"] is True   # 观测到启动（哪怕瞬间跑完）
+    assert data["state"] == "exited"  # 是否仍在跑看 state
+
+
+async def test_run_robot_output_dir_new_files(tmp_path):
+    out = tmp_path / "out"
+    out.mkdir()
+    old = out / "old.xlsx"
+    old.write_text("old")
+    past = time.time() - 100
+    os.utime(old, (past, past))  # 旧文件：窗口外
+    cfg = Config(mock=True, wait_seconds=0.0, output_dir=out)
+
+    class SlowMock(MockGateway):
+        async def launch(self, uuid, params):
+            await super().launch(uuid, params)
+            # Linux 粗时钟粒度（CLK_TCK=100）：紧贴 started 写文件，mtime 可能倒退一个 tick
+            await asyncio.sleep(0.05)
+            new = out / "report_今日.xlsx"
+            new.write_text("new")  # mtime = now > 窗口起点 → 应被捕获
+
+    async with Client(build_server(cfg, gateway=SlowMock(seed()))) as client:
+        data = (await client.call_tool("run_robot", {"uuid": "uuid-a", "params": {}})).data
+    assert data["output_files"] == [str(out / "report_今日.xlsx")]
+
+
+async def test_run_robot_output_files_none_when_unconfigured():
+    async with Client(make_server()) as client:
+        data = (await client.call_tool("run_robot", {"uuid": "uuid-a", "params": {}})).data
+    assert data["launched"] is True
+    assert data["output_files"] is None  # 未配置产出目录 → null（区别于 []）
+
+
+async def test_run_robot_output_dir_missing_is_error(tmp_path):
+    cfg = Config(mock=True, wait_seconds=0.0, output_dir=tmp_path / "nope")
+    async with Client(build_server(cfg, gateway=MockGateway(seed()))) as client:
+        data = (await client.call_tool("run_robot", {"uuid": "uuid-a", "params": {}})).data
+    assert data["error"]["code"] == "OUTPUT_DIR_NOT_FOUND"
+
+
+async def test_stop_no_robot_running_reports_false():
+    async with Client(make_server()) as client:
+        data = (await client.call_tool("stop_robot", {})).data
+    assert data["stopped"] is False
+    assert data["running_before"] == []
+    assert data["evidence"] == ["停止前运行中: 无", "停止后运行中: 无"]
+
+
+async def test_stop_stops_running_robot():
+    server = build_server(Config(mock=True), gateway=MockGateway(seed()))
+    async with Client(server) as client:
+        await client.call_tool("run_robot", {"uuid": "uuid-a", "params": {}})
+        data = (await client.call_tool("stop_robot", {})).data
+    assert data["stopped"] is True
+    assert data["running_before"] == ["uuid-a"]
+    assert data["running_after"] == []
