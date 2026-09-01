@@ -1,4 +1,4 @@
-"""领域模型。字段与 spec 工具契约一一对应。"""
+"""领域模型：MCP 工具契约的数据载体（字段清单见 .scratch/mvp-v01/spec.md 工具契约）。"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
