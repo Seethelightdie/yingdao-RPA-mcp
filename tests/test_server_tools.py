@@ -187,3 +187,56 @@ async def test_stop_ineffective_reports_false_not_lie():
     assert data["running_before"] == ["uuid-a"]
     assert data["running_after"] == ["uuid-a"]
     assert data["stopped"] is False  # 核心契约：不谎报成功
+
+
+class LaggyLogGateway(ShadowBotGateway):
+    """测试桩：模拟影刀异步刷日志——前 2 次查询返回 unknown，第 3 次才出现 exited 记录。"""
+
+    def __init__(self):
+        self.calls = 0
+
+    async def scan(self):
+        return [RobotInfo(uuid="u", name="x", path="/x")]
+
+    async def launch(self, uuid, params):
+        pass
+
+    async def status(self, uuid=None):
+        self.calls += 1
+        if self.calls < 3:
+            return {uuid or "u": RobotStatus(uuid="u", state="unknown", evidence=["日志中未出现"])}
+        return {"u": RobotStatus(uuid="u", state="exited", evidence=["已退出"])}
+
+    async def stop(self):
+        pass
+
+    async def tail_log(self, n):
+        return []
+
+
+async def test_run_robot_retries_while_log_record_pending():
+    """L3 实测竞态：瞬时机器人的日志记录晚于验证窗口落盘 → 应重试等待而非误报 launched=false。"""
+    cfg = Config(mock=True, wait_seconds=0.0)
+    gw = LaggyLogGateway()
+    async with Client(build_server(cfg, gateway=gw)) as client:
+        data = (await client.call_tool("run_robot", {"uuid": "u"})).data
+    assert data["launched"] is True
+    assert data["state"] == "exited"
+    assert gw.calls == 3  # 首查 + 2 次重试
+
+
+async def test_run_robot_unknown_after_retries_reports_false():
+    """重试耗尽仍 unknown（机器人真没跑起来）→ 如实 launched=false，不无限等。"""
+
+    class NeverSeenGateway(LaggyLogGateway):
+        async def status(self, uuid=None):
+            self.calls += 1
+            return {"u": RobotStatus(uuid="u", state="unknown", evidence=["日志中未出现"])}
+
+    cfg = Config(mock=True, wait_seconds=0.0)
+    gw = NeverSeenGateway()
+    async with Client(build_server(cfg, gateway=gw)) as client:
+        data = (await client.call_tool("run_robot", {"uuid": "u"})).data
+    assert data["launched"] is False
+    assert data["state"] == "unknown"
+    assert gw.calls == 3  # 首查 + 2 次重试后放弃

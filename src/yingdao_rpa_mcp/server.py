@@ -76,9 +76,16 @@ def build_server(config: Config, gateway: ShadowBotGateway | None = None) -> Fas
             started = time.time()
             await gw.launch(uuid, params or {})
             await asyncio.sleep(config.resolved_wait)
-            statuses = await gw.status(uuid)
-            status = statuses.get(uuid) or RobotStatus(
-                uuid=uuid, state=STATE_UNKNOWN, evidence=["日志中未出现该机器人的运行记录"])
+            status = None
+            for attempt in range(3):
+                statuses = await gw.status(uuid)
+                status = statuses.get(uuid) or RobotStatus(
+                    uuid=uuid, state=STATE_UNKNOWN, evidence=["日志中未出现该机器人的运行记录"])
+                if status.state != STATE_UNKNOWN:
+                    break
+                if attempt < 2:
+                    # 影刀异步刷日志：瞬时任务的记录可能晚于验证窗口落盘（L3 实测竞态），重试等待
+                    await asyncio.sleep(2.0)
             # 空字符串视为未传
             out_dir = Path(output_dir) if output_dir else config.output_dir
             output_files = list_new_files(out_dir, started) if out_dir else None
