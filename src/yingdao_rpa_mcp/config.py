@@ -5,7 +5,7 @@ import argparse
 import os
 import sys
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +37,8 @@ class Config:
     users_dir: Path | None = None      # 覆盖 %LOCALAPPDATA%\ShadowBot\users
     log_dir: Path | None = None        # 覆盖 %LOCALAPPDATA%\ShadowBot\log
     output_dir: Path | None = None     # 默认产出目录（run_robot 未显式传时使用）
-    token: str | None = None           # streamable-http 静态 Bearer token；None=无鉴权
+    # 静态 Bearer token；None=无鉴权；repr=False 防日志泄漏
+    token: str | None = field(default=None, repr=False)
 
     @property
     def resolved_wait(self) -> float:
