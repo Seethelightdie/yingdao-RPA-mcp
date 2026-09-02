@@ -1,4 +1,4 @@
-# run-server.ps1 —— yingdao-rpa-mcp 启动器（计划任务调用；真实网关，无 --mock）
+﻿# run-server.ps1 —— yingdao-rpa-mcp 启动器（计划任务调用；真实网关，无 --mock）
 $ErrorActionPreference = "Stop"
 $repo = $PSScriptRoot | Split-Path
 Set-Location $repo

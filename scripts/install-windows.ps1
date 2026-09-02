@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 # install-windows.ps1 —— yingdao-rpa-mcp Windows 一键安装（幂等）
 # 前提：本目录所在文件夹是仓库根（含 src/、pyproject.toml、scripts/）
 # 需要管理员权限（防火墙与计划任务）；安装后服务以"当前用户登录会话"运行（keybd_event/URL Scheme 必需）
