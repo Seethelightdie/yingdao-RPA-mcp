@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+server.out.log
+server.err.log
 .venv/
 venv/
 .venv-win/

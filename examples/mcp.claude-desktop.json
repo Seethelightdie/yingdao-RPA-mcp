@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "yingdao-rpa-mcp": {
+      "command": "python",
+      "args": ["-m", "yingdao_rpa_mcp"],
+      "env": {}
+    }
+  }
+}

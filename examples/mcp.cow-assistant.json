@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "yingdao-rpa-mcp": {
+      "type": "streamable-http",
+      "url": "http://<PC的Tailscale IP>:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer <你的token，PC端安装时生成于仓库目录.env>"
+      },
+      "timeout": 300
+    }
+  }
+}

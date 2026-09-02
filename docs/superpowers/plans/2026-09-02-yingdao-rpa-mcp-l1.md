@@ -76,7 +76,7 @@
 - [x] **Step 1: 确认 git 身份（未配置则先配置本仓库局部身份）**
 
 ```bash
-cd "/mnt/d/CODE/project/yingdao-rpa-mcp"
+cd "<repo>"
 git config user.name || true
 git config user.email || true
 ```
@@ -135,7 +135,7 @@ __version__ = "0.1.0"
 - [x] **Step 4: 安装并冒烟**
 
 ```bash
-cd "/mnt/d/CODE/project/yingdao-rpa-mcp"
+cd "<repo>"
 python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 python -c "import yingdao_rpa_mcp, fastmcp; print(yingdao_rpa_mcp.__version__)"

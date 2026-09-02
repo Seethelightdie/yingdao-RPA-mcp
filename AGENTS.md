@@ -67,7 +67,8 @@ ruff check .
 
 ## 发布前检查清单
 
-- [ ] grep 审计：无敏感信息（key / 用户名 / 真实 uuid / 真实路径）
+- [ ] git 身份已改为真实署名（开发期用占位身份 yingdao-rpa-mcp <noreply@example.com>）
+- [ ] grep 审计：无敏感信息（key / 用户名 / 真实 uuid / 真实路径 / 服务器 IP）
 - [ ] pytest 全绿（本地 + CI：ubuntu 与 windows matrix）
 - [ ] ruff 无告警
 - [ ] 真机验收清单逐项通过（启动 / 传参 / 状态 / 全局停止 / 日志尾读）

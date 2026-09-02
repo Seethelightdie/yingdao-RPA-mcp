@@ -204,7 +204,7 @@ Expected: status 列出节点；`tailscale ip -4` 打印 `100.x.y.z`（记录为
 
 方式任选：服务器 `git bundle` / 网盘 / `scp -r`（排除 `.venv`、`.git`、`.scratch`）。示例（在 WSL 执行，`<PC用户名>` 替换）：
 ```bash
-cd /mnt/d/CODE/project && tar --exclude='.venv' --exclude='.git' --exclude='.scratch' -czf /tmp/yrm.tgz yingdao-rpa-mcp
+cd <本地仓库上级目录> && tar --exclude='.venv' --exclude='.git' --exclude='.scratch' -czf /tmp/yrm.tgz yingdao-rpa-mcp
 scp /tmp/yrm.tgz root@<你的服务器IP>:/tmp/ && ssh root@<你的服务器IP> "ls -la /tmp/yrm.tgz"
 # 然后用户在 PC 上用 WinSCP/浏览器方式从服务器取 /tmp/yrm.tgz，解压到如 D:\yingdao-rpa-mcp\
 ```
@@ -357,7 +357,7 @@ Expected: `Server 'yingdao-rpa-mcp' ready — 5 tool(s)`（此时后端已是 PC
 - [ ] **Step 2: 记录与收尾**
 
 ```bash
-cd /mnt/d/CODE/project/yingdao-rpa-mcp
+cd <repo>
 cat >> .scratch/mvp-v01/spec.md <<'EOF'
 - 2026-09-02 L3 真机验收：<逐项结果记录>。Tailscale 组网（服务器 100.x / PC 100.x）；mcp.json 已切换 PC 真实网关（mock 容器保留可回切：把 url 换回 http://yingdao-rpa-mcp:8000/mcp 并恢复旧 token）。执行阶梯 L1✅ L2✅ L3✅，下一步 P4（文档包）。
 EOF

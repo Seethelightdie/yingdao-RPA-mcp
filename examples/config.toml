@@ -1,0 +1,32 @@
+# =====================================================================
+# yingdao-rpa-mcp 配置样例
+# 用法：复制本文件为仓库根目录的 config.toml，按需修改。
+# 优先级：CLI 参数 > 环境变量（前缀 YINGDAO_MCP_）> 本文件 > 内置默认值
+# 本文件中不含任何真实凭据——token 请自行生成并妥善保管，勿提交到 git。
+# =====================================================================
+
+# Mock 演示模式：true 时使用内存假机器人（无 Windows/影刀也可体验全部工具）
+# 对应环境变量 YINGDAO_MCP_MOCK=1，CLI --mock
+mock = false
+
+# 传输方式：stdio（本地 AI 客户端，如 Claude Desktop）| http（远程，如经 Tailscale）
+# 对应环境变量 YINGDAO_MCP_TRANSPORT，CLI --transport
+transport = "stdio"
+
+# ---- http 模式相关 ----
+host = "127.0.0.1"       # 监听地址：远程接入用 0.0.0.0 并配合防火墙/Tailscale 限定来源
+port = 8000              # 对应环境变量 YINGDAO_MCP_PORT，CLI --port
+# 静态 Bearer token：http 模式建议必配（空/None = 无鉴权）；对应 YINGDAO_MCP_TOKEN / --token
+token = "请替换为你自己的token"
+
+# ---- 影刀环境（默认自动探测，无需填写；仅在探测失败或多账号时覆盖）----
+# 影刀用户目录（其下 <用户ID>/apps 为机器人包），对应 YINGDAO_MCP_USERS_DIR / --users-dir
+# users_dir = "C:\\Users\\<你的用户名>\\AppData\\Local\\ShadowBot\\users"
+# 影刀日志目录（当日日志为 YYYYMMDD.log），对应 YINGDAO_MCP_LOG_DIR / --log-dir
+# log_dir = "C:\\Users\\<你的用户名>\\AppData\\Local\\ShadowBot\\log"
+
+# ---- 行为调优（一般不用动）----
+# 动作（启动/停止）后等待验证的秒数；缺省时真实网关 5 秒、mock 0 秒
+# wait_seconds = 5.0
+# 机器人产出文件的默认目录（run_robot 未显式传 output_dir 时使用）
+# output_dir = "D:\\影刀产出"

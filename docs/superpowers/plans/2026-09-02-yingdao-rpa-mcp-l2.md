@@ -262,7 +262,7 @@ git commit -m "feat: 容器化部署载体（python:3.12-slim，默认 mock+http
 - [ ] **Step 1: git archive 打包当前 HEAD 上传并解包**
 
 ```bash
-cd "/mnt/d/CODE/project/yingdao-rpa-mcp"
+cd "<repo>"
 ssh root@<你的服务器IP> "mkdir -p /opt/yingdao-rpa-mcp"
 git archive HEAD | ssh root@<你的服务器IP> "tar -x -C /opt/yingdao-rpa-mcp"
 ssh root@<你的服务器IP> "ls /opt/yingdao-rpa-mcp/Dockerfile /opt/yingdao-rpa-mcp/src/yingdao_rpa_mcp/server.py"
