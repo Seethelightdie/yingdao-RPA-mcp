@@ -13,6 +13,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.10", "3.12"]
     runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: "1"   # windows runner 是美式 locale：强制子进程/管道 UTF-8，避免中文断言失败
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
