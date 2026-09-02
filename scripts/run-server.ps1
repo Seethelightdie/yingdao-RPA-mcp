@@ -7,6 +7,9 @@ Get-Content "$repo\.env" | ForEach-Object {
     if ($_ -match "^YINGDAO_MCP_TOKEN=(.+)$") { $env:YINGDAO_MCP_TOKEN = $Matches[1] }
 }
 
+# 无会话模式：本进程重启/PC 重启后客户端（cow）的旧会话不会 404，重启对客户端透明
+$env:FASTMCP_STATELESS_HTTP = "true"
+
 # 后台启动：脱离父进程独立常驻；stdout/stderr 分文件落盘（stderr 是 uvicorn/fastmcp 日志流，属正常）
 Start-Process -FilePath "$repo\.venv-win\Scripts\python.exe" `
     -ArgumentList "-m","yingdao_rpa_mcp","--transport","http","--host","0.0.0.0","--port","8000" `
