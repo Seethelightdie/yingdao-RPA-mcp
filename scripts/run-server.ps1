@@ -1,5 +1,4 @@
 ﻿# run-server.ps1 —— yingdao-rpa-mcp 启动器（计划任务调用；真实网关，无 --mock）
-$ErrorActionPreference = "Stop"
 $repo = $PSScriptRoot | Split-Path
 Set-Location $repo
 
@@ -8,5 +7,10 @@ Get-Content "$repo\.env" | ForEach-Object {
     if ($_ -match "^YINGDAO_MCP_TOKEN=(.+)$") { $env:YINGDAO_MCP_TOKEN = $Matches[1] }
 }
 
-# 真实网关（Windows + 影刀本机）；输出全部追加到 server.log 供排障
-& "$repo\.venv-win\Scripts\python.exe" -m yingdao_rpa_mcp --transport http --host 0.0.0.0 --port 8000 *>> "$repo\server.log"
+# 后台启动：脱离父进程独立常驻；stdout/stderr 分文件落盘（stderr 是 uvicorn/fastmcp 日志流，属正常）
+Start-Process -FilePath "$repo\.venv-win\Scripts\python.exe" `
+    -ArgumentList "-m","yingdao_rpa_mcp","--transport","http","--host","0.0.0.0","--port","8000" `
+    -WorkingDirectory $repo -WindowStyle Hidden `
+    -RedirectStandardOutput "$repo\server.out.log" `
+    -RedirectStandardError "$repo\server.err.log"
+Write-Host "server 已后台启动（日志：server.err.log）"

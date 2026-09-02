@@ -60,15 +60,19 @@ $runScript = "$repo\scripts\run-server.ps1"
 schtasks /Create /F /TN $taskName /SC ONLOGON /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$runScript`"" | Out-Null
 Write-Host "计划任务 $taskName 已注册（每次登录自启）"
 
-# --- 6. 立即启动并自检（预期无 token 访问得到 401）---
+# --- 6. 立即启动并自检（重试轮询；预期无 token 访问得到 401）---
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $runScript
-Start-Sleep -Seconds 5
-try {
-    Invoke-WebRequest -Uri "http://127.0.0.1:8000/mcp" -Method POST -UseBasicParsing -TimeoutSec 5 | Out-Null
-    Write-Error "意外的 2xx——无 token 不应通过，请检查 server.log"
-} catch {
-    $code = $_.Exception.Response.StatusCode.value__
-    if ($code -eq 401) { Write-Host "自检通过：服务运行中，鉴权生效（401）" }
-    else { Write-Host "自检返回 $code，请查看 $repo\server.log 排障" }
+$ok = $false
+foreach ($i in 1..8) {
+    Start-Sleep -Seconds 3
+    try {
+        Invoke-WebRequest -Uri "http://127.0.0.1:8000/mcp" -Method POST -UseBasicParsing -TimeoutSec 5 | Out-Null
+        Write-Error "意外的 2xx——无 token 不应通过，请检查 $repo\server.err.log"
+    } catch {
+        $code = $_.Exception.Response.StatusCode.value__
+        if ($code -eq 401) { Write-Host "自检通过：服务运行中，鉴权生效（401）"; $ok = $true; break }
+        # 连接失败或其他状态 → 继续等待重试（冷启动 + fastmcp 启动时查 PyPI 需要时间）
+    }
 }
+if (-not $ok) { Write-Host "自检未通过（24 秒内未监听），请查看 $repo\server.err.log 排障" }
 Write-Host "== 安装完成。下一步：安装并登录 Tailscale（L3 计划 Task 3），运行 uninstall 前请勿删除 .env =="
