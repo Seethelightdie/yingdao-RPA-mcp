@@ -9,4 +9,4 @@ Get-Content "$repo\.env" | ForEach-Object {
 }
 
 # 真实网关（Windows + 影刀本机）；输出全部追加到 server.log 供排障
-& "$repo\.venv\Scripts\python.exe" -m yingdao_rpa_mcp --transport http --host 0.0.0.0 --port 8000 *>> "$repo\server.log"
+& "$repo\.venv-win\Scripts\python.exe" -m yingdao_rpa_mcp --transport http --host 0.0.0.0 --port 8000 *>> "$repo\server.log"

@@ -28,11 +28,11 @@ if (-not $py) {
 }
 Write-Host "Python 就绪：$(& $py -c 'import sys; print(sys.version.split()[0])')"
 
-# --- 2. venv + 安装本包 ---
-if (-not (Test-Path "$repo\.venv")) { & $py -m venv "$repo\.venv" }
-& "$repo\.venv\Scripts\python.exe" -m pip install --upgrade pip -q
-& "$repo\.venv\Scripts\python.exe" -m pip install . -q
-& "$repo\.venv\Scripts\python.exe" -c "import yingdao_rpa_mcp; print('installed', yingdao_rpa_mcp.__version__)"
+# --- 2. Windows venv（.venv-win，与 WSL 的 .venv 并存）+ 安装本包 ---
+if (-not (Test-Path "$repo\.venv-win")) { & $py -m venv "$repo\.venv-win" }
+& "$repo\.venv-win\Scripts\python.exe" -m pip install --upgrade pip -q
+& "$repo\.venv-win\Scripts\python.exe" -m pip install . -q
+& "$repo\.venv-win\Scripts\python.exe" -c "import yingdao_rpa_mcp; print('installed', yingdao_rpa_mcp.__version__)"
 
 # --- 3. token .env（已存在则保留——重复安装不换锁）---
 $envFile = "$repo\.env"
