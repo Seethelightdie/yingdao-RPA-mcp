@@ -22,6 +22,7 @@ _WAIT_MOCK = 0.0
 
 _ALLOWED_KEYS = {
     "mock", "transport", "host", "port", "wait_seconds", "users_dir", "log_dir", "output_dir",
+    "token",
 }
 _PATH_KEYS = {"users_dir", "log_dir", "output_dir"}
 
@@ -36,6 +37,7 @@ class Config:
     users_dir: Path | None = None      # 覆盖 %LOCALAPPDATA%\ShadowBot\users
     log_dir: Path | None = None        # 覆盖 %LOCALAPPDATA%\ShadowBot\log
     output_dir: Path | None = None     # 默认产出目录（run_robot 未显式传时使用）
+    token: str | None = None           # streamable-http 静态 Bearer token；None=无鉴权
 
     @property
     def resolved_wait(self) -> float:
@@ -58,6 +60,7 @@ def _env_convs() -> dict[str, tuple[str, Callable[[str], Any], str]]:
         "USERS_DIR": ("users_dir", Path, "路径"),
         "LOG_DIR": ("log_dir", Path, "路径"),
         "OUTPUT_DIR": ("output_dir", Path, "路径"),
+        "TOKEN": ("token", str, "字符串"),
     }
 
 
@@ -139,6 +142,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--users-dir", type=Path, default=None, dest="users_dir")
     parser.add_argument("--log-dir", type=Path, default=None, dest="log_dir")
     parser.add_argument("--output-dir", type=Path, default=None, dest="output_dir")
+    parser.add_argument("--token", default=None,
+                        help="streamable-http 静态 Bearer token（None=无鉴权）")
     return parser
 
 

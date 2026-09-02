@@ -170,3 +170,23 @@ def test_toml_wait_seconds_nan_raises(tmp_path: Path):
     with pytest.raises(ToolError) as excinfo:
         load_config([], config_path=toml)
     assert excinfo.value.code == CONFIG_ERROR
+
+
+def test_token_default_none():
+    cfg = load_config([])
+    assert cfg.token is None
+
+
+def test_token_from_env(monkeypatch):
+    monkeypatch.setenv("YINGDAO_MCP_TOKEN", "sekrit-token-1")
+    assert load_config([]).token == "sekrit-token-1"
+
+
+def test_token_from_cli():
+    assert load_config(["--token", "cli-token"]).token == "cli-token"
+
+
+def test_token_from_toml(tmp_path: Path):
+    toml = tmp_path / "config.toml"
+    toml.write_text('token = "toml-token"\n', encoding="utf-8")
+    assert load_config([], config_path=toml).token == "toml-token"
