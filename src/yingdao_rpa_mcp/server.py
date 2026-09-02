@@ -4,6 +4,7 @@
 - 工具永不抛异常，错误一律返回 {"error": {code, message, hint}}（对 LLM 更友好）；
 - 成功 payload 顶层带 "mock": true/false（mock 输出必须可辨识，AGENTS.md 红线）；
 - stdio 模式下本模块严禁 print 到 stdout。
+- token 经 StaticTokenVerifier 静态校验；None=无鉴权（stdio 场景默认）
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ import time
 from pathlib import Path
 
 from fastmcp import FastMCP
+from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
 
 from .config import Config
 from .errors import INTERNAL, OUTPUT_DIR_NOT_FOUND, ToolError, error_payload
@@ -40,7 +42,10 @@ def list_new_files(output_dir: Path, since_ts: float) -> list[str]:
 
 def build_server(config: Config, gateway: ShadowBotGateway | None = None) -> FastMCP:
     gw = gateway if gateway is not None else get_gateway(config)
-    mcp = FastMCP("yingdao-rpa-mcp")
+    auth = None
+    if config.token:
+        auth = StaticTokenVerifier(tokens={config.token: {"client_id": "yingdao-rpa-mcp-client"}})
+    mcp = FastMCP("yingdao-rpa-mcp", auth=auth)
 
     def ok(payload: dict) -> dict:
         return {"mock": config.mock, **payload}
